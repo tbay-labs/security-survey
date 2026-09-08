@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#003152">
+    <title>Tbay Trading Safety Survey</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        tbNavy: '#003152',
+                        tbDark: '#00203a',
+                        tbCyan: '#00cccc',
+                        tbCyanDark: '#046f70',
+                        tbWarn: '#f0b93f',
+                        tbSurface: '#f3f8f9'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #00203a;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+        }
+        
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #f3f8f9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            overflow-x: hidden;
+        }
+
+        .header-safe-area {
+            padding-top: max(16px, env(safe-area-inset-top));
+        }
+
+        /* Step Transitions */
+        .step-container {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out forwards;
+            flex-direction: column;
+            flex: 1;
+        }
+        .step-container.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Custom Form Elements */
+        .custom-radio input[type="radio"], .custom-checkbox input[type="checkbox"] {
+            display: none;
+        }
+        .custom-radio label, .custom-checkbox label {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .custom-radio input[type="radio"]:checked + label,
+        .custom-checkbox input[type="checkbox"]:checked + label {
+            border-color: #00cccc;
+            background: #f0fdfd;
+            box-shadow: 0 4px 10px rgba(0, 204, 204, 0.1);
+        }
+        .indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #cbd5e1;
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .custom-checkbox .indicator { border-radius: 6px; }
+        
+        .custom-radio input[type="radio"]:checked + label .indicator {
+            border-color: #00cccc;
+        }
+        .custom-radio input[type="radio"]:checked + label .indicator::after {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: #00cccc;
+            border-radius: 50%;
+        }
+
+        .custom-checkbox input[type="checkbox"]:checked + label .indicator {
+            background: #00cccc;
+            border-color: #00cccc;
+        }
+        .custom-checkbox input[type="checkbox"]:checked + label .indicator::after {
+            content: '✓';
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Scale Buttons (1-5, 0-10) */
+        .scale-btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .scale-btn-group input[type="radio"] { display: none; }
+        .scale-btn-group label {
+            flex: 1;
+            min-width: 40px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-weight: 800;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .scale-btn-group input[type="radio"]:checked + label {
+            background: #00cccc;
+            border-color: #00cccc;
+            color: #00203a;
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(0, 204, 204, 0.2);
+        }
+
+        /* Textareas & Inputs */
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            font-family: inherit;
+            font-size: 15px; 
+            transition: border-color 0.2s;
+            resize: none;
+        }
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #00cccc;
+        }
+
+        /* Good To Know Callout */
+        .good-to-know {
+            background: #e0fcfc;
+            border-left: 4px solid #00cccc;
+            padding: 16px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+        }
+
+        /* Progress Bar */
+        .progress-bar-bg { background: #e2e8f0; height: 6px; border-radius: 3px; width: 100%; overflow: hidden; }
+        .progress-bar-fill { background: #00cccc; height: 100%; width: 0%; transition: width 0.3s ease; }
+
+        .loader {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid #00203a;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Toast Notification */
+        #toast {
+            position: fixed;
+            bottom: max(20px, env(safe-area-inset-bottom));
+            left: 50%;
+            transform: translateX(-50%) translateY(150%);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            background: #00203a;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            width: max-content;
+            max-width: 90%;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">Message</div>
+
+    <div class="app-container" id="survey-form">
+        
+        <!-- Header -->
+        <div class="header-safe-area bg-tbNavy px-6 pb-4 pt-2 shrink-0 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+            <button id="back-btn" onclick="handleHeaderBack()" class="hidden w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white active:bg-white/20 transition shrink-0">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="flex-1 text-center font-bold text-white tracking-wide" id="header-title">Safety Survey</div>
+            <div class="w-10"></div> <!-- Spacer for centering -->
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="px-6 py-4 bg-white border-b border-gray-100" id="progress-container">
+            <div class="flex justify-between text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">
+                <span id="step-counter">Step 1 of 9</span>
+                <span id="completion-pct">0%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
+        </div>
+
+        <!-- Scrollable Content Area -->
+        <div class="flex-1 px-6 py-6 overflow-y-auto" id="main-scroll">
+            
+            <!-- STEP 0: Welcome -->
+            <div class="step-container active" id="step-0">
+                <div class="text-center py-6">
+                    <img src="https://mcusercontent.com/4ceda90aa48260f0c3c397068/images/3089e9cb-945f-b383-b957-d5175b3d8c39.png" alt="Tbay" class="h-8 mx-auto mb-6 brightness-0 opacity-80">
+                    <h1 class="text-3xl font-black text-tbDark mb-3">Trading Safety Awareness</h1>
+                    <p class="text-gray-500 mb-6 leading-relaxed">Help us understand how safe you feel trading on Tbay, and learn a few tips to protect yourself along the way.</p>
+                    
+                    <div class="bg-tbSurface border border-tbCyan/30 rounded-2xl p-5 mb-8 text-left">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">🎁</span>
+                            <h3 class="font-bold text-tbDark">Reward upon completion</h3>
+                        </div>
+                        <p class="text-sm text-gray-600">Complete this survey to receive a <strong>2% Rate-Up Coupon</strong> valid until Sept 30, 2026.</p>
+                    </div>
+
+                    <div class="flex items-center gap-2 justify-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Est. Time: 4-6 Mins
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 1: Activity -->
+            <div class="step-container" id="step-1">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Your Trading Activity</h2>
+                
+                <div class="mb-8">
+                    <p class="font-bold text-tbDark mb-4">1. How often do you trade gift cards on Tbay?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q1" id="q1_a" value="Daily"><label for="q1_a"><div class="indicator"></div>Daily</label>
+                        <input type="radio" name="q1" id="q1_b" value="A few times a week"><label for="q1_b"><div class="indicator"></div>A few times a week</label>
+                        <input type="radio" name="q1" id="q1_c" value="A few times a month"><label for="q1_c"><div class="indicator"></div>A few times a month</label>
+                        <input type="radio" name="q1" id="q1_d" value="Rarely"><label for="q1_d"><div class="indicator"></div>Rarely</label>
+                        <input type="radio" name="q1" id="q1_e" value="This is my first trade"><label for="q1_e"><div class="indicator"></div>This is my first trade</label>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <p class="font-bold text-tbDark mb-4">2. Which trade type do you use most often?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q2" id="q2_a" value="Fast transaction"><label for="q2_a"><div class="indicator"></div>Fast transaction (sell directly to Tbay)</label>
+                        <input type="radio" name="q2" id="q2_b" value="Normal trade"><label for="q2_b"><div class="indicator"></div>Normal trade (sell to a buyer on marketplace)</label>
+                        <input type="radio" name="q2" id="q2_c" value="Both equally"><label for="q2_c"><div class="indicator"></div>Both, about equally</label>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <p class="font-bold text-tbDark mb-4">3. How long have you been using Tbay?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q3" id="q3_a" value="Less than 1 month"><label for="q3_a"><div class="indicator"></div>Less than 1 month</label>
+                        <input type="radio" name="q3" id="q3_b" value="1–6 months"><label for="q3_b"><div class="indicator"></div>1–6 months</label>
+                        <input type="radio" name="q3" id="q3_c" value="6–12 months"><label for="q3_c"><div class="indicator"></div>6–12 months</label>
+                        <input type="radio" name="q3" id="q3_d" value="Over 1 year"><label for="q3_d"><div class="indicator"></div>Over 1 year</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 2: Safety Perception -->
+            <div class="step-container" id="step-2">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Overall Safety Perception</h2>
+                
+                <div class="mb-8">
+                    <p class="font-bold text-tbDark mb-2">4. On a scale of 1–5, how safe do you feel trading gift cards on Tbay?</p>
+                    <div class="flex justify-between text-xs text-gray-500 mb-3 px-1"><span>Not Safe</span><span>Very Safe</span></div>
+                    <div class="scale-btn-group mb-2">
+                        <input type="radio" name="q4" id="q4_1" value="1"><label for="q4_1">1</label>
+                        <input type="radio" name="q4" id="q4_2" value="2"><label for="q4_2">2</label>
+                        <input type="radio" name="q4" id="q4_3" value="3"><label for="q4_3">3</label>
+                        <input type="radio" name="q4" id="q4_4" value="4"><label for="q4_4">4</label>
+                        <input type="radio" name="q4" id="q4_5" value="5"><label for="q4_5">5</label>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <p class="font-bold text-tbDark mb-4">5. What, if anything, makes you feel unsafe or uncertain when trading?</p>
+                    <textarea name="q5" rows="3" placeholder="Optional: Tell us your thoughts..."></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <p class="font-bold text-tbDark mb-4">6. Have you ever hesitated to complete a trade because of a safety concern?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q6" id="q6_y" value="Yes" onchange="toggleConditional('q6_conditional', true)"><label for="q6_y"><div class="indicator"></div>Yes</label>
+                        <input type="radio" name="q6" id="q6_n" value="No" onchange="toggleConditional('q6_conditional', false)"><label for="q6_n"><div class="indicator"></div>No</label>
+                    </div>
+                    <div id="q6_conditional" class="hidden mt-3">
+                        <p class="text-sm font-semibold text-tbDark mb-2">What was the concern?</p>
+                        <textarea name="q6_text" rows="2" placeholder="Describe the concern..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Official Channels -->
+            <div class="step-container" id="step-3">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Official Channels</h2>
+                
+                <div class="mb-2">
+                    <p class="font-bold text-tbDark mb-4">7. Where do you believe you can safely trade gift cards with Tbay? (Select all that apply)</p>
+                    <div class="custom-checkbox">
+                        <input type="checkbox" name="q7" id="q7_1" value="iOS app"><label for="q7_1"><div class="indicator"></div>Tbay iOS app</label>
+                        <input type="checkbox" name="q7" id="q7_2" value="Android app"><label for="q7_2"><div class="indicator"></div>Tbay Android app</label>
+                        <input type="checkbox" name="q7" id="q7_3" value="Telegram Mini App"><label for="q7_3"><div class="indicator"></div>Tbay Telegram Mini App</label>
+                        <input type="checkbox" name="q7" id="q7_4" value="WhatsApp groups"><label for="q7_4"><div class="indicator"></div>WhatsApp groups claiming to be Tbay</label>
+                        <input type="checkbox" name="q7" id="q7_5" value="Social Media Pages"><label for="q7_5"><div class="indicator"></div>Facebook/Instagram pages</label>
+                        <input type="checkbox" name="q7" id="q7_6" value="Not sure"><label for="q7_6"><div class="indicator"></div>Not sure</label>
+                    </div>
+                </div>
+
+                <div class="good-to-know">
+                    <h4 class="font-black text-tbCyanDark flex items-center gap-2 mb-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Good to know</h4>
+                    <p class="text-sm text-tbNavy leading-relaxed">Tbay only operates through the official iOS app, Android app, and Telegram Mini App. We <strong>never</strong> trade through WhatsApp groups, social media pages, or any other channel.</p>
+                </div>
+
+                <div class="mb-4 mt-6">
+                    <p class="font-bold text-tbDark mb-4">8. Now that you know this, how confident are you that you can identify official Tbay channels?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q8" id="q8_a" value="Very confident"><label for="q8_a"><div class="indicator"></div>Very confident</label>
+                        <input type="radio" name="q8" id="q8_b" value="Somewhat confident"><label for="q8_b"><div class="indicator"></div>Somewhat confident</label>
+                        <input type="radio" name="q8" id="q8_c" value="Not confident"><label for="q8_c"><div class="indicator"></div>Not confident</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 4: Buyer Security Deposit -->
+            <div class="step-container" id="step-4">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Marketplace Protection</h2>
+                
+                <div class="mb-2">
+                    <p class="font-bold text-tbDark mb-4">9. Were you aware that Tbay buyers must hold a security deposit to protect sellers?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q9" id="q9_y" value="Yes"><label for="q9_y"><div class="indicator"></div>Yes</label>
+                        <input type="radio" name="q9" id="q9_n" value="No"><label for="q9_n"><div class="indicator"></div>No</label>
+                    </div>
+                </div>
+
+                <div class="good-to-know">
+                    <h4 class="font-black text-tbCyanDark flex items-center gap-2 mb-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Good to know</h4>
+                    <p class="text-sm text-tbNavy leading-relaxed">Every buyer on Tbay holds a 30,000-Tbay-points security deposit. If a buyer fails to pay or acts dishonestly, this deposit is used to compensate you.</p>
+                </div>
+
+                <div class="mb-4 mt-6">
+                    <p class="font-bold text-tbDark mb-4">10. Does knowing this change how safe you feel trading with buyers on Tbay?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q10" id="q10_a" value="Yes, more confident"><label for="q10_a"><div class="indicator"></div>Yes, more confident</label>
+                        <input type="radio" name="q10" id="q10_b" value="No change"><label for="q10_b"><div class="indicator"></div>No change</label>
+                        <input type="radio" name="q10" id="q10_c" value="Not sure"><label for="q10_c"><div class="indicator"></div>Not sure</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 5: Official Support Channels -->
+            <div class="step-container" id="step-5">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Support Channels</h2>
+                
+                <div class="mb-2">
+                    <p class="font-bold text-tbDark mb-4">11. If you had an issue with a trade, where would you go for help?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q11" id="q11_a" value="In-app chat"><label for="q11_a"><div class="indicator"></div>In-app chat</label>
+                        <input type="radio" name="q11" id="q11_b" value="Email help"><label for="q11_b"><div class="indicator"></div>Email help@theiabay.com</label>
+                        <input type="radio" name="q11" id="q11_c" value="Telegram group"><label for="q11_c"><div class="indicator"></div>A Telegram group chat</label>
+                        <input type="radio" name="q11" id="q11_d" value="Social media DM"><label for="q11_d"><div class="indicator"></div>A social media DM</label>
+                        <input type="radio" name="q11" id="q11_e" value="Ask another user"><label for="q11_e"><div class="indicator"></div>Ask another user</label>
+                        <input type="radio" name="q11" id="q11_f" value="Not sure"><label for="q11_f"><div class="indicator"></div>Not sure</label>
+                    </div>
+                </div>
+
+                <div class="good-to-know">
+                    <h4 class="font-black text-tbCyanDark flex items-center gap-2 mb-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Good to know</h4>
+                    <p class="text-sm text-tbNavy leading-relaxed">Tbay customer support is <strong>only</strong> available through in-app chat and our official email, help@theiabay.com. We will never ask for help or personal details through DMs or unofficial groups.</p>
+                </div>
+
+                <div class="mb-4 mt-6">
+                    <p class="font-bold text-tbDark mb-4">12. Were you aware of both official support channels before this survey?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q12" id="q12_a" value="Yes, both"><label for="q12_a"><div class="indicator"></div>Yes, both</label>
+                        <input type="radio" name="q12" id="q12_b" value="Only one"><label for="q12_b"><div class="indicator"></div>Only one</label>
+                        <input type="radio" name="q12" id="q12_c" value="No, neither"><label for="q12_c"><div class="indicator"></div>No, neither</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 6: Avoiding Impersonation -->
+            <div class="step-container" id="step-6">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Avoiding Impersonators</h2>
+                
+                <div class="mb-2">
+                    <p class="font-bold text-tbDark mb-4">13. In the past week, have you experienced any of the following suspicious activities? (Select all that apply)</p>
+                    <div class="custom-checkbox">
+                        <input type="checkbox" name="q13" id="q13_1" value="Phone call from fake staff"><label for="q13_1"><div class="indicator"></div>Received a phone call claiming to be Tbay</label>
+                        <input type="checkbox" name="q13" id="q13_2" value="Private message from fake staff"><label for="q13_2"><div class="indicator"></div>Received a private message (WhatsApp/Telegram/SMS)</label>
+                        <input type="checkbox" name="q13" id="q13_3" value="Mentioned trading history"><label for="q13_3"><div class="indicator"></div>Stranger mentioned my Tbay trading history</label>
+                        <input type="checkbox" name="q13" id="q13_4" value="Asked for codes"><label for="q13_4"><div class="indicator"></div>Asked to provide gift card info, PIN, or verification code</label>
+                        <input type="checkbox" name="q13" id="q13_5" value="Asked to trade off platform"><label for="q13_5"><div class="indicator"></div>Asked to move to another platform to trade privately</label>
+                        <input type="checkbox" name="q13" id="q13_6" value="Suspicious link"><label for="q13_6"><div class="indicator"></div>Received a suspicious link</label>
+                        <input type="checkbox" name="q13" id="q13_7" value="Loss of funds"><label for="q13_7"><div class="indicator"></div>Experienced a loss of funds due to a scam</label>
+                        <input type="checkbox" name="q13" id="q13_8" value="None"><label for="q13_8"><div class="indicator"></div>None of the above</label>
+                    </div>
+                </div>
+
+                <div class="good-to-know">
+                    <h4 class="font-black text-tbCyanDark flex items-center gap-2 mb-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Good to know</h4>
+                    <p class="text-sm text-tbNavy leading-relaxed">Trading outside the Tbay app is risky — Tbay cannot verify, protect, or resolve disputes for deals made off-platform. Tbay staff will <strong>never</strong> contact you outside the app to ask for trade details, codes, PINs, or payment.</p>
+                </div>
+
+                <div class="mb-4 mt-6">
+                    <p class="font-bold text-tbDark mb-4">14. How likely are you to report a contact who claims to be a Tbay representative, or who asks you to trade off-platform?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q14" id="q14_a" value="Very likely"><label for="q14_a"><div class="indicator"></div>Very likely</label>
+                        <input type="radio" name="q14" id="q14_b" value="Somewhat likely"><label for="q14_b"><div class="indicator"></div>Somewhat likely</label>
+                        <input type="radio" name="q14" id="q14_c" value="Unlikely"><label for="q14_c"><div class="indicator"></div>Unlikely</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 7: One Card One Platform -->
+            <div class="step-container" id="step-7">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Trading Rules</h2>
+                
+                <div class="mb-2">
+                    <p class="font-bold text-tbDark mb-4">15. Have you ever submitted the same gift card to more than one trading platform at the same time?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q15" id="q15_y" value="Yes"><label for="q15_y"><div class="indicator"></div>Yes</label>
+                        <input type="radio" name="q15" id="q15_n" value="No"><label for="q15_n"><div class="indicator"></div>No</label>
+                        <input type="radio" name="q15" id="q15_u" value="Not sure"><label for="q15_u"><div class="indicator"></div>Not sure what this means</label>
+                    </div>
+                </div>
+
+                <div class="good-to-know">
+                    <h4 class="font-black text-tbCyanDark flex items-center gap-2 mb-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Good to know</h4>
+                    <p class="text-sm text-tbNavy leading-relaxed">Submitting the same card to multiple platforms at once can get your trade flagged, delayed, or rejected. Always trade each card on one platform at a time.</p>
+                </div>
+
+                <div class="mb-4 mt-6">
+                    <p class="font-bold text-tbDark mb-4">16. Was this guidance clear to you before now?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q16" id="q16_y" value="Yes"><label for="q16_y"><div class="indicator"></div>Yes</label>
+                        <input type="radio" name="q16" id="q16_n" value="No"><label for="q16_n"><div class="indicator"></div>No</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 8: Account Security -->
+            <div class="step-container" id="step-8">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Account Security Habits</h2>
+                
+                <div class="mb-2">
+                    <p class="font-bold text-tbDark mb-4">17. When did you last change your Tbay transaction PIN and profile password?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q17" id="q17_a" value="Within 6 months"><label for="q17_a"><div class="indicator"></div>Within the last 6 months</label>
+                        <input type="radio" name="q17" id="q17_b" value="6-12 months"><label for="q17_b"><div class="indicator"></div>6–12 months ago</label>
+                        <input type="radio" name="q17" id="q17_c" value="Over a year"><label for="q17_c"><div class="indicator"></div>Over a year ago</label>
+                        <input type="radio" name="q17" id="q17_d" value="Never"><label for="q17_d"><div class="indicator"></div>Never changed it</label>
+                        <input type="radio" name="q17" id="q17_e" value="Not sure"><label for="q17_e"><div class="indicator"></div>Not sure</label>
+                    </div>
+                </div>
+
+                <div class="good-to-know">
+                    <h4 class="font-black text-tbCyanDark flex items-center gap-2 mb-1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg> Good to know</h4>
+                    <p class="text-sm text-tbNavy leading-relaxed">For your security, we strongly recommend changing your transaction PIN and profile password every 6 months.</p>
+                </div>
+
+                <div class="mb-4 mt-6">
+                    <p class="font-bold text-tbDark mb-4">18. How likely are you to update your PIN/password after today?</p>
+                    <div class="custom-radio">
+                        <input type="radio" name="q18" id="q18_a" value="Very likely"><label for="q18_a"><div class="indicator"></div>Very likely</label>
+                        <input type="radio" name="q18" id="q18_b" value="Somewhat likely"><label for="q18_b"><div class="indicator"></div>Somewhat likely</label>
+                        <input type="radio" name="q18" id="q18_c" value="Unlikely"><label for="q18_c"><div class="indicator"></div>Unlikely</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 9: Trust & Recommendation -->
+            <div class="step-container" id="step-9">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Trust & Recommendation</h2>
+                
+                <div class="mb-8">
+                    <p class="font-bold text-tbDark mb-2">19. How likely are you to recommend Tbay to a friend, based on how safe it feels to trade?</p>
+                    <div class="flex justify-between text-[11px] text-gray-500 mb-3 px-1 uppercase font-bold"><span>Not likely</span><span>Extremely likely</span></div>
+                    <div class="grid grid-cols-6 gap-2 mb-2">
+                        <div class="scale-btn-group" style="display:contents;">
+                            <input type="radio" name="q19" id="q19_0" value="0"><label for="q19_0">0</label>
+                            <input type="radio" name="q19" id="q19_1" value="1"><label for="q19_1">1</label>
+                            <input type="radio" name="q19" id="q19_2" value="2"><label for="q19_2">2</label>
+                            <input type="radio" name="q19" id="q19_3" value="3"><label for="q19_3">3</label>
+                            <input type="radio" name="q19" id="q19_4" value="4"><label for="q19_4">4</label>
+                            <input type="radio" name="q19" id="q19_5" value="5"><label for="q19_5">5</label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2">
+                        <div class="scale-btn-group" style="display:contents;">
+                            <input type="radio" name="q19" id="q19_6" value="6"><label for="q19_6">6</label>
+                            <input type="radio" name="q19" id="q19_7" value="7"><label for="q19_7">7</label>
+                            <input type="radio" name="q19" id="q19_8" value="8"><label for="q19_8">8</label>
+                            <input type="radio" name="q19" id="q19_9" value="9"><label for="q19_9">9</label>
+                            <input type="radio" name="q19" id="q19_10" value="10"><label for="q19_10">10</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <p class="font-bold text-tbDark mb-1">20. Which safety measures would you most like Tbay to prioritize and improve?</p>
+                    <p class="text-xs text-gray-500 mb-4">(Select up to 3)</p>
+                    
+                    <div class="custom-checkbox" id="q20_group">
+                        <input type="checkbox" name="q20" id="q20_1" value="Faster CS response" onchange="enforceMaxChecks('q20', 3)"><label for="q20_1"><div class="indicator"></div>Faster CS response times</label>
+                        <input type="checkbox" name="q20" id="q20_2" value="Better compensation" onchange="enforceMaxChecks('q20', 3)"><label for="q20_2"><div class="indicator"></div>Better compensation mechanisms</label>
+                        <input type="checkbox" name="q20" id="q20_3" value="Stricter ID verification" onchange="enforceMaxChecks('q20', 3)"><label for="q20_3"><div class="indicator"></div>Stricter identity verification for buyers</label>
+                        <input type="checkbox" name="q20" id="q20_4" value="More educational content" onchange="enforceMaxChecks('q20', 3)"><label for="q20_4"><div class="indicator"></div>More educational content/alerts</label>
+                        <input type="checkbox" name="q20" id="q20_5" value="Enhanced security features" onchange="enforceMaxChecks('q20', 3)"><label for="q20_5"><div class="indicator"></div>Enhanced account security (Biometrics/2FA)</label>
+                        <input type="checkbox" name="q20" id="q20_6" value="Easier reporting system" onchange="enforceMaxChecks('q20', 3)"><label for="q20_6"><div class="indicator"></div>Easier reporting system for scammers</label>
+                        <input type="checkbox" name="q20" id="q20_7" value="Other" onchange="enforceMaxChecks('q20', 3); toggleConditional('q20_other_box', this.checked)"><label for="q20_7"><div class="indicator"></div>Other</label>
+                    </div>
+                    <div id="q20_other_box" class="hidden mt-3">
+                        <input type="text" name="q20_other_text" placeholder="Please specify...">
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 10: Final Thoughts -->
+            <div class="step-container" id="step-10">
+                <h2 class="text-xl font-bold text-tbDark mb-6">Final Thoughts</h2>
+                
+                <div class="mb-4">
+                    <p class="font-bold text-tbDark mb-4">21. Is there anything else you'd like Tbay to know about your experience trading safely on the platform?</p>
+                    <textarea name="q21" rows="5" placeholder="Your feedback is valuable to us..."></textarea>
+                </div>
+            </div>
+
+            <!-- STEP 11: Completion / Reward -->
+            <div class="step-container" id="step-11">
+                <div class="text-center py-8">
+                    <div class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 border-4 border-white shadow-md">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <h1 class="text-3xl font-black text-tbDark mb-3">Survey Complete!</h1>
+                    <p class="text-gray-500 mb-8 leading-relaxed">Thank you for taking the time to share your feedback. Your insights help make Tbay a safer place to trade.</p>
+                    
+                    <div class="bg-tbNavy rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                        <div class="absolute -right-10 -top-10 w-32 h-32 bg-tbCyan rounded-full opacity-20 blur-2xl"></div>
+                        <h3 class="text-tbCyan font-bold text-sm uppercase tracking-wider mb-2">Your Reward</h3>
+                        <p class="text-white text-3xl font-black mb-4 tracking-widest" id="reward-code">jbdjjkj</p>
+                        <p class="text-white/70 text-sm mb-6">2% Rate-Up Coupon<br>Valid until 30/09/2026</p>
+                        
+                        <button onclick="copyRewardCode()" id="btn-copy" class="w-full bg-tbCyan text-tbDark font-bold py-3.5 rounded-xl active:scale-95 transition">
+                            Copy Code
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer Navigation -->
+        <div class="bg-white border-t border-gray-100 p-4 pb-safe shrink-0 flex gap-3 z-50" id="nav-footer">
+            <button id="btn-prev" onclick="navigateStep(-1)" class="flex-1 hidden bg-gray-100 text-tbDark font-bold py-4 rounded-xl active:bg-gray-200 transition">Back</button>
+            <button id="btn-next" onclick="navigateStep(1)" class="flex-[2] bg-tbCyan text-tbDark font-bold py-4 rounded-xl active:scale-[0.98] transition flex justify-center items-center gap-2">
+                <span id="btn-next-text">Start Survey</span>
+                <div class="loader" id="loader-submit"></div>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        // REPLACE WITH YOUR ACTUAL GOOGLE APPS SCRIPT URL
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbxGu9W8No4Sn3jJDIwhxWoSCjM6gH1WWXFDKF9FNQK3TRK5u1lATkxjt6NbyFNutax1/exec"; 
+        
+        let currentStep = 0;
+        const totalSteps = 10; // 0 (Welcome) to 10 (Final Q)
+        let userId = "";
+
+        // UI Elements
+        const btnPrev = document.getElementById('btn-prev');
+        const btnNext = document.getElementById('btn-next');
+        const btnNextText = document.getElementById('btn-next-text');
+        const navFooter = document.getElementById('nav-footer');
+        const progressContainer = document.getElementById('progress-container');
+        const stepCounter = document.getElementById('step-counter');
+        const pctCounter = document.getElementById('completion-pct');
+        const progressBar = document.getElementById('progress-bar');
+        const mainScroll = document.getElementById('main-scroll');
+
+        // OS Detection for iOS back button
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (isIOS) { 
+            document.getElementById('back-btn').style.display = 'flex'; 
+        }
+
+        function handleHeaderBack() {
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.closeWebview) {
+                window.webkit.messageHandlers.closeWebview.postMessage("");
+            } else if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.close) {
+                window.webkit.messageHandlers.close.postMessage("");
+            } else {
+                window.history.back();
+            }
+        }
+
+        // --- CORE LOGIC ---
+        function initSurvey() {
+            // Check UUID
+            userId = localStorage.getItem('tbay_survey_uid');
+            if (!userId) {
+                userId = 'user_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+                localStorage.setItem('tbay_survey_uid', userId);
+            }
+
+            // Check if already completed
+            const isCompleted = localStorage.getItem('tbay_survey_completed');
+            if (isCompleted === 'true') {
+                showStep(11); // Jump to reward
+                return;
+            }
+
+            // Load saved progress
+            loadFormData();
+            
+            // Start at step 0
+            showStep(0);
+
+            // Add auto-save listeners to all inputs
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('change', saveFormData);
+                if(input.tagName === 'TEXTAREA' || input.type === 'text') {
+                    input.addEventListener('input', saveFormData);
+                }
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function toggleConditional(id, show) {
+            const el = document.getElementById(id);
+            if (show) el.classList.remove('hidden');
+            else el.classList.add('hidden');
+        }
+
+        function enforceMaxChecks(groupName, max) {
+            const checkboxes = document.querySelectorAll(`input[name="${groupName}"]:checked`);
+            if (checkboxes.length > max) {
+                // Uncheck the last interacted one if over limit (relies on the event caller, but simple approach: uncheck current)
+                event.target.checked = false;
+                showToast(`You can only select up to ${max} options.`);
+            }
+        }
+
+        // --- NAVIGATION & VALIDATION ---
+        function validateStep(step) {
+            // Simplified validation: check if at least one radio in required groups is selected
+            let isValid = true;
+            if (step === 1) {
+                if (!document.querySelector('input[name="q1"]:checked')) isValid = false;
+                if (!document.querySelector('input[name="q2"]:checked')) isValid = false;
+                if (!document.querySelector('input[name="q3"]:checked')) isValid = false;
+            } else if (step === 2) {
+                if (!document.querySelector('input[name="q4"]:checked')) isValid = false;
+                if (!document.querySelector('input[name="q6"]:checked')) isValid = false;
+            } else if (step === 3) {
+                if (document.querySelectorAll('input[name="q7"]:checked').length === 0) isValid = false;
+                if (!document.querySelector('input[name="q8"]:checked')) isValid = false;
+            } else if (step === 4) {
+                if (!document.querySelector('input[name="q9"]:checked')) isValid = false;
+                if (!document.querySelector('input[name="q10"]:checked')) isValid = false;
+            } else if (step === 5) {
+                if (!document.querySelector('input[name="q11"]:checked')) isValid = false;
+                if (!document.querySelector('input[name="q12"]:checked')) isValid = false;
+            } else if (step === 6) {
+                if (document.querySelectorAll('input[name="q13"]:checked').length === 0) isValid = false;
+                if (!document.querySelector('input[name="q14"]:checked')) isValid = false;
+            } else if (step === 7) {
+                if (!document.querySelector('input[name="q15"]:checked')) isValid = false;
+                if (!document.querySelector('input[name="q16"]:checked')) isValid = false;
+            } else if (step === 8) {
+                if (!document.querySelector('input[name="q17"]:checked')) isValid = false;
+                if (!document.querySelector('input[name="q18"]:checked')) isValid = false;
+            } else if (step === 9) {
+                if (!document.querySelector('input[name="q19"]:checked')) isValid = false;
+                if (document.querySelectorAll('input[name="q20"]:checked').length === 0) isValid = false;
+            }
+            // Step 10 is open text, making it optional
+            
+            if (!isValid) showToast('Please answer the required questions to proceed.');
+            return isValid;
+        }
+
+        function navigateStep(direction) {
+            if (direction === 1 && currentStep > 0 && currentStep < 11) {
+                if (!validateStep(currentStep)) return;
+            }
+
+            let nextStep = currentStep + direction;
+            
+            if (nextStep === 11) {
+                submitSurvey();
+            } else {
+                showStep(nextStep);
+            }
+        }
+
+        function showStep(step) {
+            // Hide all
+            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
+            
+            currentStep = step;
+            const stepEl = document.getElementById(`step-${step}`);
+            if (stepEl) stepEl.classList.add('active');
+            
+            mainScroll.scrollTop = 0;
+
+            // Update UI based on step
+            if (step === 0) {
+                progressContainer.style.display = 'none';
+                btnPrev.style.display = 'none';
+                btnNext.classList.remove('flex-1');
+                btnNext.classList.add('flex-[2]');
+                btnNextText.innerText = 'Start Survey';
+            } else if (step > 0 && step <= 10) {
+                progressContainer.style.display = 'block';
+                btnPrev.style.display = 'block';
+                btnNextText.innerText = (step === 10) ? 'Submit Survey' : 'Next';
+                
+                // Update Progress
+                stepCounter.innerText = `Section ${step} of 10`;
+                let pct = Math.round((step / 10) * 100);
+                pctCounter.innerText = `${pct}%`;
+                progressBar.style.width = `${pct}%`;
+            } else if (step === 11) {
+                // Completed
+                document.getElementById('header-title').innerText = 'Survey Complete';
+                progressContainer.style.display = 'none';
+                navFooter.style.display = 'none';
+            }
+        }
+
+        // --- DATA MANAGEMENT ---
+        function saveFormData() {
+            const formData = {};
+            
+            // Radios & Checkboxes
+            const inputs = document.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked');
+            inputs.forEach(input => {
+                if (input.type === 'radio') {
+                    formData[input.name] = input.value;
+                } else if (input.type === 'checkbox') {
+                    if (!formData[input.name]) formData[input.name] = [];
+                    formData[input.name].push(input.value);
+                }
+            });
+
+            // Textareas & Texts
+            const texts = document.querySelectorAll('textarea, input[type="text"]');
+            texts.forEach(t => {
+                formData[t.name] = t.value;
+            });
+
+            localStorage.setItem('tbay_survey_data', JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const saved = localStorage.getItem('tbay_survey_data');
+            if (!saved) return;
+            
+            try {
+                const formData = JSON.parse(saved);
+                for (const key in formData) {
+                    const val = formData[key];
+                    if (Array.isArray(val)) {
+                        val.forEach(v => {
+                            const el = document.querySelector(`input[name="${key}"][value="${v}"]`);
+                            if (el) el.checked = true;
+                        });
+                    } else {
+                        // Radio
+                        let el = document.querySelector(`input[name="${key}"][value="${val}"]`);
+                        if (el) el.checked = true;
+                        else {
+                            // Text
+                            el = document.querySelector(`[name="${key}"]`);
+                            if (el) el.value = val;
+                        }
+                    }
+                }
+                
+                // Trigger conditionals manually if loaded
+                if (formData['q6'] === 'Yes') toggleConditional('q6_conditional', true);
+                if (formData['q20'] && formData['q20'].includes('Other')) toggleConditional('q20_other_box', true);
+                
+            } catch(e) { console.error("Error loading data", e); }
+        }
+
+        async function submitSurvey() {
+            const loader = document.getElementById('loader-submit');
+            btnNext.disabled = true;
+            loader.style.display = 'block';
+            btnNextText.innerText = 'Submitting...';
+
+            saveFormData(); // Ensure latest changes are saved
+            const savedData = JSON.parse(localStorage.getItem('tbay_survey_data') || '{}');
+            
+            // Format data for Google Sheets
+            const payload = {
+                action: 'submitSurvey',
+                userId: userId,
+                q1: savedData.q1 || '',
+                q2: savedData.q2 || '',
+                q3: savedData.q3 || '',
+                q4: savedData.q4 || '',
+                q5: savedData.q5 || '',
+                q6: savedData.q6 || '',
+                q6_text: savedData.q6_text || '',
+                q7: (savedData.q7 || []).join(', '),
+                q8: savedData.q8 || '',
+                q9: savedData.q9 || '',
+                q10: savedData.q10 || '',
+                q11: savedData.q11 || '',
+                q12: savedData.q12 || '',
+                q13: (savedData.q13 || []).join(', '),
+                q14: savedData.q14 || '',
+                q15: savedData.q15 || '',
+                q16: savedData.q16 || '',
+                q17: savedData.q17 || '',
+                q18: savedData.q18 || '',
+                q19: savedData.q19 || '',
+                q20: (savedData.q20 || []).join(', '),
+                q20_other: savedData.q20_other_text || '',
+                q21: savedData.q21 || ''
+            };
+
+            // IF GAS_URL is set, send data. Otherwise just proceed to success for demo.
+            if (GAS_URL !== "YOUR_APPS_SCRIPT_WEB_APP_URL") {
+                try {
+                    await fetch(GAS_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+                } catch(e) {
+                    console.error("Submission error", e);
+                    // Continue to success even if network fails so user isn't blocked from reward
+                }
+            }
+
+            // Mark as complete and show success
+            localStorage.setItem('tbay_survey_completed', 'true');
+            showStep(11);
+            
+            btnNext.disabled = false;
+            loader.style.display = 'none';
+        }
+
+        function copyRewardCode() {
+            const code = document.getElementById('reward-code').innerText;
+            const btn = document.getElementById('btn-copy');
+            const originalText = btn.innerText;
+            
+            // Use temporary textarea fallback for iFrames/in-app browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = code;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                document.execCommand('copy');
+                btn.innerText = "Copied!";
+                btn.style.backgroundColor = "#10b981"; // Green
+                btn.style.color = "white";
+                
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = "#00cccc";
+                    btn.style.color = "#00203a";
+                }, 2000);
+            } catch (err) {
+                showToast("Failed to copy. Please manually copy the code.");
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // Initialize on load
+        window.onload = initSurvey;
+    </script>
+</body>
+</html>
