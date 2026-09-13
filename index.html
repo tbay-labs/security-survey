@@ -42,13 +42,11 @@
             flex-direction: column;
             position: relative;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            /* Fix for iPhone notch / Dynamic Island overlaying */
-            padding-top: env(safe-area-inset-top); 
         }
         
-        /* Header safe area to guarantee text doesn't hit the notch */
+        /* Header safe area to guarantee text doesn't hit the notch or Dynamic Island */
         .header-safe-area { 
-            padding-top: max(16px, env(safe-area-inset-top)); 
+            padding-top: calc(max(24px, env(safe-area-inset-top)) + 20px); 
         }
         
         input[type="text"], textarea {
