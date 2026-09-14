@@ -443,6 +443,32 @@
         let currentStep = 0;
         let userId = null;
 
+        function checkAndMapAppUserId(browserUserId) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const appUserId = urlParams.get('uid');
+
+            if (appUserId) {
+                const savedMapping = localStorage.getItem('tbay_id_mapped');
+                if (savedMapping !== appUserId) {
+                    fetch(GAS_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'mapUserId',
+                            appUserId: appUserId,
+                            browserUserId: browserUserId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            localStorage.setItem('tbay_id_mapped', appUserId);
+                        }
+                    })
+                    .catch(error => console.error('Error mapping User ID:', error));
+                }
+            }
+        }
+
         function initSurvey() {
             // Check for existing Security Streak data
             const streakDataRaw = localStorage.getItem('tbay_security_user');
@@ -468,6 +494,9 @@
                     localStorage.setItem('tbay_survey_uid', userId);
                 }
             }
+
+            // Map the Android App User ID if present in the URL
+            checkAndMapAppUserId(userId);
 
             const isCompleted = localStorage.getItem('tbay_survey_completed');
             if (isCompleted === 'true') {
