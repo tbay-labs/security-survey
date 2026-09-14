@@ -563,7 +563,7 @@
                 const code = document.querySelector('input[name="referralCode"]');
                 if (!code || code.value.trim().length !== 6) {
                     isValid = false;
-                    showToast('Please enter your exact 6-character referral code to start.');
+                    showToast('Please enter your exact referral code to start.');
                 }
             } else if (step === 1) {
                 if (!document.querySelector('input[name="q1"]:checked') || 
